@@ -41,5 +41,6 @@ const play = async () => {
   }
   rl.close();
 }
+console.log("test");
 
 play()
