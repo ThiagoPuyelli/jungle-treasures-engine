@@ -1,6 +1,7 @@
 import readline from 'readline'
 import { GenerateJungle } from './generateJungle';
 import { showTable } from './utils';
+import { getRandomValues } from 'crypto';
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -18,6 +19,10 @@ const question = (query: string) => {
 const play = async () => {
   let inputValue: any = []
   const table = GenerateJungle.generateDefault()
+  console.log("before move");
+  showTable(table)
+  GenerateJungle.generateMove("0-4, 0-5, 0-6, 1-6, 2-6, 3-5", table, [0,3])
+  console.log("after move");
   showTable(table)
   inputValue = await question("Me llamo tato: ")
   while (inputValue!='end') {

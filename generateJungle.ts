@@ -46,4 +46,20 @@ export class GenerateJungle {
   private static generateSpikeCoordinate () {
     return new Coordinate(Math.floor(Math.random() * 5) + 1, Math.floor(Math.random() * 6) + 1)
   }
+
+  static generateMove(move: string, table: number[][], currentPos: number[]) {
+    const coordinates = move.split(",")
+    table[currentPos[0]][currentPos[1]] = 0 
+    // making a move.
+    for (let i = 0; i < coordinates.length; i++) {
+      let xy = coordinates[i].split("-")
+      const x = parseInt(xy[0])
+      const y = parseInt(xy[1])
+      if (i === coordinates.length -1) {
+        table[x][y] = 6
+      } else {
+        table[x][y] = 0
+      }
+    }
+  }
 }
