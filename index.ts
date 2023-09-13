@@ -1,7 +1,8 @@
 import readline from 'readline'
 import { GenerateJungle } from './generateJungle';
-import { showTable } from './utils';
-import { getRandomValues } from 'crypto';
+import { showSnapshots, showTable } from './utils';
+import { Coordinate } from './Coordinate';
+import { Jungle } from './Jungle';
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -19,30 +20,20 @@ const question = (query: string) => {
 const play = async () => {
   let inputValue: any = []
   const table = GenerateJungle.generateDefault()
-  console.log("before move");
-  showTable(table)
-  GenerateJungle.generateMove("0-4, 0-5, 0-6, 1-6, 2-6, 3-5", table, [0,3])
-  console.log("after move");
-  showTable(table)
-  inputValue = await question("Me llamo tato: ")
+  const jungle = new Jungle(table, new Coordinate(0, 3), 30)
+  showTable(jungle.getTable())
+  inputValue = await question("Introducir coordenadas: ")
   while (inputValue!='end') {
     const inputs = inputValue.toString().split(' ')
-    const positions = inputs[0].split('-')
-    if (inputs.length === 2 /*&& parseInt(inputs[1]) <= pieces.length - 1 && parseInt(inputs[1]) >= 0 && positions.length === 2*/) {
-      let x: any = positions[0]
-      let y: any = positions[1]
-      let piece = parseInt(inputs[1])
-      /*const body = action(table, pieces, parseInt(x), parseInt(y), piece)
-      if (body) {
-        table = body.table
-        pieces = body.pieces
-        showTable(table)
-        showPieces(pieces)
-      }*/
+    const positions = jungle.validateInput(inputs[0])
+    if (positions) {
+      jungle.generateMove(positions)
     } else {
       console.log('wrong input!\n')
     }
-    inputValue = await question("Introducir Coordenadas (x-y) y luego un espacio y la pieza o end: ")
+    await showSnapshots(jungle.getSnapshots())
+    inputValue = await question("Introducir Coordenadas: \n")
+    jungle.setSnapshots([])
   }
   rl.close();
 }
