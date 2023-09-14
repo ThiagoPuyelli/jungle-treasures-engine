@@ -38,6 +38,10 @@ export class Jungle {
       } else {
         this.table[coordinates[i].getX()][coordinates[i].getY()] += 90
       }
+      if (i > 0) {
+        this.table[coordinates[i - 1].getX()][coordinates[i - 1].getY()] = 0
+      } 
+      
       this.snapshots.push({
         table: this.getTableSerialized(),
         match: false,
@@ -75,4 +79,6 @@ export class Jungle {
     }
     return coordinates
   }
+
+  
 }
