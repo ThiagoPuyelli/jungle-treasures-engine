@@ -29,25 +29,30 @@ export class Jungle {
   }
   
   public generateMove(coordinates: Coordinate[]) {
-    this.table[this.currentPos.getX()][this.currentPos.getY()] = 0
+    this.table[this.currentPos.getX()][this.currentPos.getY()] = 6
+    let length = coordinates.length
     // making a move.
-    for (let i = 0; i < coordinates.length; i++) {
-      if (i === coordinates.length -1) {
-        this.table[coordinates[i].getX()][coordinates[i].getY()] = 6
-        this.currentPos = coordinates[i]
-      } else {
+    for (let i = 0; i < length; i++) {
         this.table[coordinates[i].getX()][coordinates[i].getY()] += 90
-      }
-      if (i > 0) {
-        this.table[coordinates[i - 1].getX()][coordinates[i - 1].getY()] = 0
-      } 
       
+      if (i > 0 && i <= length - 1) {
+        this.table[coordinates[i - 1].getX()][coordinates[i - 1].getY()] = 6
+        this.updateCurrentPos(coordinates[i - 1].getX(), coordinates[i - 1].getY())
+      } 
       this.snapshots.push({
         table: this.getTableSerialized(),
         match: false,
         prize: undefined
       })
     }
+    this.table[coordinates[length - 1].getX()][coordinates[length - 1].getY()] = 6
+    this.updateCurrentPos(coordinates[length - 1].getX(), coordinates[length - 1].getY())
+    this.snapshots.push({
+      table: this.getTableSerialized(),
+      match: false,
+      prize: undefined
+    })
+    console.log('current position', this.currentPos);
   }
 
   public validateInput (move: string) {
@@ -79,6 +84,9 @@ export class Jungle {
     }
     return coordinates
   }
-
-  
+  private updateCurrentPos(x: number, y: number): void {
+    this.table[this.currentPos.getX()][this.currentPos.getY()] = 0
+    this.currentPos.setX(x)
+    this.currentPos.setY(y)
+  }  
 }
