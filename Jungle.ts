@@ -27,6 +27,10 @@ export class Jungle {
   getTableSerialized () {
       return JSON.parse(JSON.stringify(this.table))
   }
+
+  public getCell (coordinate: Coordinate) {
+    return this.table[coordinate.getX()][coordinate.getY()]
+  }
   
   public generateMove(coordinates: Coordinate[]) {
     this.table[this.currentPos.getX()][this.currentPos.getY()] = 6
@@ -52,6 +56,7 @@ export class Jungle {
       match: false,
       prize: undefined
     })
+    this.turns--
     console.log('current position', this.currentPos);
   }
 
@@ -59,12 +64,26 @@ export class Jungle {
     const inputs = move.split(":")
     const coordinates: Coordinate[] = []
     let actualCoord = this.currentPos
+    let typeCell
 
     for (let i = 0;i < inputs.length;i++) {
       const inputSplit = inputs[i].split("-")
       const coordinate = new Coordinate(parseInt(inputSplit[0]), parseInt(inputSplit[1]))
       const diferenceX = coordinate.getX() - actualCoord.getX()
       const diferenceY = coordinate.getY() - actualCoord.getY()
+      if (
+        i === 0 
+        && 
+        (coordinate.getX() >= 0 && coordinate.getX() <= 6)
+        &&
+        (coordinate.getY() >= 0 && coordinate.getY() <= 6)
+      ) {
+        typeCell = this.getCell(coordinate)
+        if (typeCell === 4) {
+          return undefined
+        }
+      }
+
       if (
         (coordinate.getX() >= 0 && coordinate.getX() <= 6)
         &&
@@ -75,6 +94,8 @@ export class Jungle {
         (diferenceY <= 1 && diferenceY >= -1)
         &&
         !(diferenceX === 0 && diferenceY === 0)
+        &&
+        typeCell === this.getCell(coordinate)
       ) {
         coordinates.push(coordinate)
         actualCoord = coordinate
@@ -89,4 +110,5 @@ export class Jungle {
     this.currentPos.setX(x)
     this.currentPos.setY(y)
   }  
+
 }

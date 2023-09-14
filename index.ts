@@ -3,6 +3,7 @@ import { GenerateJungle } from './generateJungle';
 import { showSnapshots, showTable } from './utils';
 import { Coordinate } from './Coordinate';
 import { Jungle } from './Jungle';
+import { INITIAL_TURNS } from './Types';
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -20,7 +21,7 @@ const question = (query: string) => {
 const play = async () => {
   let inputValue: any = []
   const table = GenerateJungle.generateDefault()
-  const jungle = new Jungle(table, new Coordinate(0, 3), 30)
+  const jungle = new Jungle(table, new Coordinate(0, 3), INITIAL_TURNS)
   showTable(jungle.getTable())
   inputValue = await question("Introducir coordenadas: ")
   while (inputValue!='end') {

@@ -5,6 +5,8 @@ export const TRAPS = [4, 5] // Spike, Scorpion
 
 export const PLAYER = 6
 
+export const INITIAL_TURNS = 30
+
 export type ITable = number[][]
 
 export type IPrize = {
