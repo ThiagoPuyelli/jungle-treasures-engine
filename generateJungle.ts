@@ -1,5 +1,5 @@
 import { Coordinate } from "./Coordinate";
-import { PLAYER, TRAPS, TREASURES } from "./Types"
+import { PLAYER, SPIKE, TREASURES } from "./Types"
 // TODO generateLines with no more than 2 traps per row or column.
 export class GenerateJungle {
   public static generateDefault () {
@@ -9,7 +9,8 @@ export class GenerateJungle {
     }
     const spikes = this.generateSpikesCoordinates()
     for (let spike of spikes) {
-      table[spike.getY()][spike.getX()] = TRAPS[0]
+      const randomIndex = Math.floor(Math.random() * SPIKE.length)
+      table[spike.getY()][spike.getX()] = SPIKE[randomIndex]
     }
     return table
   }
