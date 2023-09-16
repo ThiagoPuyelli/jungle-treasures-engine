@@ -1,3 +1,4 @@
+import { log } from "console"
 import { Coordinate } from "./Coordinate"
 import { ISnapshot } from "./Types"
 import { showTable } from "./utils"
@@ -57,7 +58,8 @@ export class Jungle {
       prize: undefined
     })
     this.turns--
-    console.log('current position', this.currentPos);
+    let lowestROws: Coordinate[] =  this.extractLowestRowCoordinates(coordinates)
+    console.log('Lowest rows values:', lowestROws);
   }
 
   public validateInput (move: string) {
@@ -109,6 +111,34 @@ export class Jungle {
     this.table[this.currentPos.getX()][this.currentPos.getY()] = 0
     this.currentPos.setX(x)
     this.currentPos.setY(y)
-  }  
+  }
+  
+  private extractLowestRowCoordinates(coordinates: Coordinate[]): Coordinate[] {
+    let lowestRowsCoord: Coordinate[] = []
+    let sameColumns: Coordinate[] = []
+    let seenYValues = new Set() // keeping track of y values encountered so far.
+    for (const coord of coordinates) {
+      const tempY = coord.getY()
+      // if it's a new value add it and filter it.
+      if (!seenYValues.has(tempY)) {
+        seenYValues.add(tempY)
+        sameColumns = coordinates.filter(value => value.getY() === tempY)
+        lowestRowsCoord.push(this.findLowestPair(sameColumns))
+      }
+    }
+    return lowestRowsCoord
+  }
+
+  private findLowestPair(coordinates: Coordinate[]): Coordinate {
+    let lowestRow = coordinates[0].getX()
+    let lowestPair: Coordinate = new Coordinate(coordinates[0].getX(), coordinates[0].getY())
+    for (const coord of coordinates) {
+      if (coord.getX() < lowestRow) {
+        lowestRow = coord.getX()
+        lowestPair = new Coordinate(coord.getX(), coord.getY())
+      }
+    }
+    return lowestPair
+  }
 
 }
