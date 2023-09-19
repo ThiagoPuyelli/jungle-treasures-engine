@@ -1,5 +1,5 @@
 import { Coordinate } from "./Coordinate";
-import { PLAYER, SPIKE, TREASURES } from "./Types"
+import { PLAYER, SCORPION, SPIKE, TREASURES } from "./Types"
 // TODO generateLines with no more than 2 traps per row or column.
 export class GenerateJungle {
   public static generateDefault () {
@@ -13,6 +13,23 @@ export class GenerateJungle {
       table[spike.getY()][spike.getX()] = SPIKE[randomIndex]
     }
     return table
+  }
+
+  public static generateGemsPool () {
+    const gemsPool: number[] = []
+    for (let i = 0;i < 500;i++) {
+      if (i < 50) {
+        gemsPool.push(TREASURES[Math.floor(Math.random() * TREASURES.length)])
+      } else {
+        const indexRandom = TREASURES[Math.floor(Math.random() * (TREASURES.length + 1))]
+        if (indexRandom > TREASURES.length) {
+          gemsPool.push(SCORPION[Math.floor(Math.random() * SCORPION.length)])
+        } else {
+          gemsPool.push(TREASURES[indexRandom])
+        }
+      }
+    }
+    return gemsPool
   }
 
   private static generateLine (trap: boolean) {

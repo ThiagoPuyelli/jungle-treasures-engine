@@ -1,5 +1,6 @@
 import { Coordinate } from "./Coordinate"
 import { ISnapshot, SPIKE } from "./Types"
+import { GenerateJungle } from "./generateJungle"
 import { showTable } from "./utils"
 
 export class Jungle {
@@ -8,11 +9,13 @@ export class Jungle {
   private currentPos: Coordinate
   private turns: number
   private snapshots: ISnapshot[] = []
+  private gemsPool: number[]  // In engine, implementation with stage
 
   constructor (table: number[][], currentPos: Coordinate, turns: number) {
     this.table = table
     this.currentPos = currentPos
     this.turns = turns
+    this.gemsPool = GenerateJungle.generateGemsPool()
   }
 
   getScore () { return this.score }
@@ -27,7 +30,7 @@ export class Jungle {
   getTableSerialized () {
       return JSON.parse(JSON.stringify(this.table))
   }
-
+  
   public getCell (coordinate: Coordinate) {
     return this.table[coordinate.getX()][coordinate.getY()]
   }
@@ -58,6 +61,7 @@ export class Jungle {
     })
     this.turns--
     this.reallocateGems() 
+    this.restoreEmptySlots()
   }
 
   public validateInput (move: string) {
@@ -116,7 +120,7 @@ export class Jungle {
     let needToMove = false
     const row = 7
     const column = 7
-    const gemMoved = 50
+    const gemMoved = 80
     let amountOfZeros = 0
     let temp: Coordinate = new Coordinate(0, 0)
     for (let c = 0; c < column; c++) {
@@ -140,6 +144,53 @@ export class Jungle {
         }
       }
       needToMove = false // reset when changing columns
+    }
+    this.snapshots.push({
+      table: this.getTableSerialized(),
+      match: false,
+      prize: undefined
+    })
+    for (const y in this.table) {
+      for (const x in this.table[y]) {
+        if (this.table[y][x] > 80) {
+          this.table[y][x] %= (this.table[y][x] < 800 ? 80 : 800)
+        }
+      }
+    }
+    this.snapshots.push({
+      table: this.getTableSerialized(),
+      match: false,
+      prize: undefined
+    })
+  }
+
+  private extractGems (amount: number) {
+    const gems = this.gemsPool.splice(0, amount)
+    this.gemsPool = this.gemsPool.concat(gems)
+    return gems
+  }
+
+  private restoreEmptySlots () {
+    const coordinates: Coordinate[] = []
+    for (const y in this.table) {
+      for (const x in this.table[y]) {
+        if (this.table[y][x] === 0) {
+          coordinates.push(new Coordinate(parseInt(x), parseInt(y)))
+        }
+      }
+    }
+    const elements = this.extractGems(coordinates.length)
+    for (const i in coordinates) {
+      this.table[coordinates[i].getY()][coordinates[i].getX()] = elements[i] < 10 ? elements[i] + 80 : elements[i] + 800
+    }
+    this.snapshots.push({
+      table: this.getTableSerialized(),
+      match: false,
+      prize: undefined
+    })
+    for (const i in coordinates) {
+      const currentCell = this.getCell(coordinates[i])
+      this.table[coordinates[i].getY()][coordinates[i].getX()] = currentCell > 100 ? currentCell % 800 : currentCell % 80
     }
     this.snapshots.push({
       table: this.getTableSerialized(),
