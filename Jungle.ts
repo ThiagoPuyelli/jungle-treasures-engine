@@ -8,6 +8,8 @@ export class Jungle {
   private table: number[][]
   private currentPos: Coordinate
   private turns: number
+  private columns: number = 7 
+  private rows: number = 7 
   private snapshots: ISnapshot[] = []
   private gemsPool: number[]  // In engine, implementation with stage
 
@@ -115,35 +117,25 @@ export class Jungle {
     this.currentPos.setY(y)
   }
   
-  // It takes a player's move and it reallocates the gems on their new place.
+  
   private reallocateGems(): void {
-    let needToMove = false
-    const row = 7
-    const column = 7
     const gemMoved = 80
-    let amountOfZeros = 0
-    let temp: Coordinate = new Coordinate(0, 0)
-    for (let c = 0; c < column; c++) {
-      for (let r = 1; r < row; r++) {
+    const queue: Coordinate[] = []
+    for (let c = 0; c < this.columns; c++) {
+      for (let r = 0; r < this.rows; r++) {
         let current = this.table[r][c]
-        if (!SPIKE.includes(current) && current !== 0 && current !== 6) {
-          if (this.table[r - 1][c] === 0) {
-            this.table[r - 1][c] = current + gemMoved
+        if (current === 0) {
+          queue.push(new Coordinate(r, c))
+        } else if (current !== 6 && !SPIKE.includes(current) && !(queue.length === 0) && current !== 0) {
+          let coord: Coordinate | undefined = queue.shift()
+          if (coord !== undefined) {
+            this.table[coord.getX()][coord.getY()] = current + gemMoved
             this.table[r][c] = 0
-
-          } else if (SPIKE.includes(this.table[r - 1][c]) && needToMove) {
-            this.table[temp.getX()][temp.getY()] = current + gemMoved
-            this.table[r][c] = 0
-            needToMove = false
+            queue.push(new Coordinate(r, c))
           }
-        
-        } else if (SPIKE.includes(current) && this.table[r - 1][c] === 0) {
-          needToMove = true
-          temp.setX(r - 1)
-          temp.setY(c)
         }
       }
-      needToMove = false // reset when changing columns
+      queue.length = 0
     }
     this.snapshots.push({
       table: this.getTableSerialized(),
@@ -163,6 +155,7 @@ export class Jungle {
       prize: undefined
     })
   }
+
 
   private extractGems (amount: number) {
     const gems = this.gemsPool.splice(0, amount)
