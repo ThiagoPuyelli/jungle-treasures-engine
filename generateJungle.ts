@@ -3,24 +3,24 @@ import { PLAYER, SCORPION, SPIKE, TREASURES } from "./Types"
 // TODO generateLines with no more than 2 traps per row or column.
 export class GenerateJungle {
   public static generateDefault () {
-    const table: number[][] = [
+    const table: number[][] = [] /*[  
       [1,   1,   3,   3,   3,   44,  1,],   
       [2,   1,   1,   3,   3,   1,   2],   
       [2,   3,   3,   1,   47,  1,   3],   
       [2,   1,   44,  3,   2,   45,  1],   
       [1,   2,   1,   3,   2,   2,   2],   
-      [1,   45,  1,   3,   44,  2,   1],   
-      [2,   2,   3,   6,   2,   2,   2]  //1-3:2-3:3-3:4-2:5-3:5-4:6-4:6-3:6-2
+      [1,   45,  1,   3,   44,  2,   1],  Test   
+      [2,   2,   3,   6,   2,   2,   2]  //3-1:3-2:3-3:2-4:3-5:4-5:4-6:3-6:2-6
     ]
-    table.reverse()
-    /*for (let i = 0;i < 7;i++) {
+    table.reverse()*/
+    for (let i = 0;i < 7;i++) {
       table.push(this.generateLine(i !== 0))
     }
     const spikes = this.generateSpikesCoordinates()
     for (let spike of spikes) {
       const randomIndex = Math.floor(Math.random() * SPIKE.length)
       table[spike.getY()][spike.getX()] = SPIKE[randomIndex]
-    }*/
+    }
     return table
   }
 

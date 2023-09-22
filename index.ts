@@ -21,7 +21,7 @@ const question = (query: string) => {
 const play = async () => {
   let inputValue: any = []
   const table = GenerateJungle.generateDefault()
-  const jungle = new Jungle(table, new Coordinate(0, 3), INITIAL_TURNS)
+  const jungle = new Jungle(table, new Coordinate(3, 0), INITIAL_TURNS)
   showTable(jungle.getTable())
   inputValue = await question("Introducir coordenadas: ")
   while (inputValue!='end') {

@@ -34,18 +34,22 @@ export class Jungle {
   }
   
   public getCell (coordinate: Coordinate) {
-    return this.table[coordinate.getX()][coordinate.getY()]
+    return this.table[coordinate.getY()][coordinate.getX()]
+  }
+
+  public putInCell (coordinate: Coordinate, cell: number) {
+    this.table[coordinate.getY()][coordinate.getX()] = cell
   }
   
   public generateMove(coordinates: Coordinate[]) {
-    this.table[this.currentPos.getX()][this.currentPos.getY()] = 6
+    this.table[this.currentPos.getY()][this.currentPos.getX()] = 6
     let length = coordinates.length
     // making a move.
     for (let i = 0; i < length; i++) {
-        this.table[coordinates[i].getX()][coordinates[i].getY()] += 90
+        this.table[coordinates[i].getY()][coordinates[i].getX()] += 90
       
       if (i > 0 && i <= length - 1) {
-        this.table[coordinates[i - 1].getX()][coordinates[i - 1].getY()] = 6
+        this.table[coordinates[i - 1].getY()][coordinates[i - 1].getX()] = 6
         this.updateCurrentPos(coordinates[i - 1].getX(), coordinates[i - 1].getY())
       } 
       this.snapshots.push({
@@ -54,7 +58,7 @@ export class Jungle {
         prize: undefined
       })
     }
-    this.table[coordinates[length - 1].getX()][coordinates[length - 1].getY()] = 6
+    this.table[coordinates[length - 1].getY()][coordinates[length - 1].getX()] = 6
     this.updateCurrentPos(coordinates[length - 1].getX(), coordinates[length - 1].getY())
     this.snapshots.push({
       table: this.getTableSerialized(),
@@ -85,10 +89,10 @@ export class Jungle {
         (coordinate.getY() >= 0 && coordinate.getY() < this.columns)
       ) {
         typeCell = this.getCell(coordinate)
+        actualCoord = coordinate
+        coordinates.push(coordinate)
         if (SPIKE.includes(typeCell)) {
           typeCell = undefined
-          coordinates.push(coordinate)
-          actualCoord = coordinate
         }
       } else if (
         (coordinate.getX() >= 0 && coordinate.getX() < this.rows)
@@ -112,7 +116,7 @@ export class Jungle {
     return coordinates
   }
   private updateCurrentPos(x: number, y: number): void {
-    this.table[this.currentPos.getX()][this.currentPos.getY()] = 0
+    this.table[this.currentPos.getY()][this.currentPos.getX()] = 0
     this.currentPos.setX(x)
     this.currentPos.setY(y)
   }
