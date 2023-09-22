@@ -70,7 +70,7 @@ export class Jungle {
     const inputs = move.split(":")
     const coordinates: Coordinate[] = []
     let actualCoord = this.currentPos
-    let typeCell
+    let typeCell = undefined
 
     for (let i = 0;i < inputs.length;i++) {
       const inputSplit = inputs[i].split("-")
@@ -78,22 +78,22 @@ export class Jungle {
       const diferenceX = coordinate.getX() - actualCoord.getX()
       const diferenceY = coordinate.getY() - actualCoord.getY()
       if (
-        i === 0 
+        typeCell === undefined
         && 
-        (coordinate.getX() >= 0 && coordinate.getX() <= 6)
+        (coordinate.getX() >= 0 && coordinate.getX() < this.rows)
         &&
-        (coordinate.getY() >= 0 && coordinate.getY() <= 6)
+        (coordinate.getY() >= 0 && coordinate.getY() < this.columns)
       ) {
         typeCell = this.getCell(coordinate)
-        if (typeCell === 4) {
-          return undefined
+        if (SPIKE.includes(typeCell)) {
+          typeCell = undefined
+          coordinates.push(coordinate)
+          actualCoord = coordinate
         }
-      }
-
-      if (
-        (coordinate.getX() >= 0 && coordinate.getX() <= 6)
+      } else if (
+        (coordinate.getX() >= 0 && coordinate.getX() < this.rows)
         &&
-        (coordinate.getY() >= 0 && coordinate.getY() <= 6)
+        (coordinate.getY() >= 0 && coordinate.getY() < this.columns)
         && 
         (diferenceX <= 1 && diferenceX >= -1)
         &&
@@ -101,7 +101,7 @@ export class Jungle {
         &&
         !(diferenceX === 0 && diferenceY === 0)
         &&
-        typeCell === this.getCell(coordinate)
+        (typeCell === this.getCell(coordinate) || (this.getCell(coordinate) > 10 && i < inputs.length - 1))
       ) {
         coordinates.push(coordinate)
         actualCoord = coordinate
