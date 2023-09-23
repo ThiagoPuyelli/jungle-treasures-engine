@@ -12,12 +12,14 @@ export class Jungle {
   private rows: number = 7 
   private snapshots: ISnapshot[] = []
   private gemsPool: number[]  // In engine, implementation with stage
+  private lives: number
 
-  constructor (table: number[][], currentPos: Coordinate, turns: number) {
+  constructor (table: number[][], currentPos: Coordinate, turns: number, lives: number) {
     this.table = table
     this.currentPos = currentPos
     this.turns = turns
     this.gemsPool = GenerateJungle.generateGemsPool()
+    this.lives = lives
   }
 
   getScore () { return this.score }
@@ -42,24 +44,49 @@ export class Jungle {
   }
   
   public generateMove(coordinates: Coordinate[]) {
+    let chainLength = 0
     this.table[this.currentPos.getY()][this.currentPos.getX()] = 6
     let length = coordinates.length
+    let trapCoord: Coordinate = new Coordinate(-1, -1)
     // making a move.
     for (let i = 0; i < length; i++) {
+      chainLength = this.calculateChainLength(coordinates[i], chainLength)
+      let current = this.table[coordinates[i].getY()][coordinates[i].getX()]
+      if (SPIKE.includes(current)) {
+        this.table[coordinates[i].getY()][coordinates[i].getX()] += 50 // to add up 90. 
+        trapCoord = new Coordinate(coordinates[i].getX(), coordinates[i].getY())
+      } else {
         this.table[coordinates[i].getY()][coordinates[i].getX()] += 90
-      
+      }
       if (i > 0 && i <= length - 1) {
         this.table[coordinates[i - 1].getY()][coordinates[i - 1].getX()] = 6
-        this.updateCurrentPos(coordinates[i - 1].getX(), coordinates[i - 1].getY())
+        console.log(`trapCoord ${trapCoord.getXY()} and currePos ${this.currentPos.getXY()}`);
+        
+        if (trapCoord.getX() === this.currentPos.getX() && trapCoord.getY() === this.currentPos.getY()) {
+          console.log('pepe trap');
+          this.updateCurrentPos(coordinates[i - 1].getX(), coordinates[i - 1].getY(), true)
+        }
+        else {
+          console.log('pepe no trap');
+          this.updateCurrentPos(coordinates[i - 1].getX(), coordinates[i - 1].getY(), false)
+        } 
       } 
       this.snapshots.push({
         table: this.getTableSerialized(),
         match: false,
         prize: undefined
       })
+      console.log(`Trap coordinates ${trapCoord.getXY()}`);
+      
     }
+    console.log(`trapCoord ${trapCoord.getXY()} and currePos ${this.currentPos.getXY()}`);
     this.table[coordinates[length - 1].getY()][coordinates[length - 1].getX()] = 6
-    this.updateCurrentPos(coordinates[length - 1].getX(), coordinates[length - 1].getY())
+    if (trapCoord.getX() === this.currentPos.getX() && trapCoord.getY() === this.currentPos.getY()) {
+      this.updateCurrentPos(coordinates[length - 1].getX(), coordinates[length - 1].getY(), true)
+    } else {
+      this.updateCurrentPos(coordinates[length - 1].getX(), coordinates[length - 1].getY(), false)
+    }
+    
     this.snapshots.push({
       table: this.getTableSerialized(),
       match: false,
@@ -68,6 +95,21 @@ export class Jungle {
     this.turns--
     this.reallocateGems() 
     this.restoreEmptySlots()
+  }
+
+  private calculateChainLength(coordinates: Coordinate, chain: number) {
+    let currentCell: number = this.getCell(coordinates)
+    
+    if (!SPIKE.includes(currentCell)) {
+      chain += 1
+      return chain
+    }
+    if (chain + 40 >= currentCell) {
+      chain -= currentCell - 40
+      return chain
+    }
+    this.lives -= 1
+    return 0
   }
 
   public validateInput (move: string) {
@@ -115,10 +157,16 @@ export class Jungle {
     }
     return coordinates
   }
-  private updateCurrentPos(x: number, y: number): void {
-    this.table[this.currentPos.getY()][this.currentPos.getX()] = 0
-    this.currentPos.setX(x)
-    this.currentPos.setY(y)
+  private updateCurrentPos(x: number, y: number, trap: boolean): void {
+    console.log(` bef current pos ${this.currentPos.getXY()}`);
+    if (trap)
+      this.table[this.currentPos.getY()][this.currentPos.getX()] = 20
+    else {
+      this.table[this.currentPos.getY()][this.currentPos.getX()] = 0
+      this.currentPos.setX(x)
+      this.currentPos.setY(y)
+    }
+    console.log(` aft current pos ${this.currentPos.getXY()}`);
   }
   
   
