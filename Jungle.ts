@@ -46,35 +46,42 @@ export class Jungle {
   public generateMove(coordinates: Coordinate[]) {
     let chainLength = 0
     const trapQueue: Coordinate[] = []
+    const trapValues: number[] = []
     this.table[this.currentPos.getY()][this.currentPos.getX()] = 6
     let length = coordinates.length
     let trapCoord: Coordinate = new Coordinate(-1, -1)
+    let trapValue: number | undefined
+    
     // making a move.
     for (let i = 0; i < length; i++) {
       chainLength = this.calculateChainLength(coordinates[i], chainLength)
+      console.log(`Chain length: ${chainLength}`);
       let current = this.table[coordinates[i].getY()][coordinates[i].getX()]
       if (SPIKE.includes(current)) {
+        trapValues.push(this.table[coordinates[i].getY()][coordinates[i].getX()])
+        console.log('Trap Values: ', trapValues);
+        
         this.table[coordinates[i].getY()][coordinates[i].getX()] += 50 // to add up 90. 
         trapQueue.push(new Coordinate(coordinates[i].getX(), coordinates[i].getY()))
       } else {
         this.table[coordinates[i].getY()][coordinates[i].getX()] += 90
       }
       if (i > 0 && i <= length - 1) {
-        console.log(`currePos ${this.currentPos.getXY()}`);
         if (trapQueue.length !== 0) {
-          console.log('pepe in')
           if (trapQueue[0].getX() === this.currentPos.getX() && trapQueue[0].getY() === this.currentPos.getY()) {
-            console.log('pepe trap')
-            this.updateCurrentPos(coordinates[i - 1].getX(), coordinates[i - 1].getY(), true)
+            trapValue = trapValues.shift()
+            console.log('Trap value: ', trapValue)
+            if (trapValue !== undefined) {
+              this.updateCurrentPos(coordinates[i - 1].getX(), coordinates[i - 1].getY(), true, chainLength, trapValue) // subtract 50 to get the actual value.
+            }
             trapQueue.shift() // dequeuing the element.
           } else {
             this.table[coordinates[i - 1].getY()][coordinates[i - 1].getX()] = 6  
-            this.updateCurrentPos(coordinates[i - 1].getX(), coordinates[i - 1].getY(), false)
+            this.updateCurrentPos(coordinates[i - 1].getX(), coordinates[i - 1].getY(), false, chainLength, 1) // the last parameter in this case does not matter.
           }
         } else {
-          console.log('pepe no trap');
           this.table[coordinates[i - 1].getY()][coordinates[i - 1].getX()] = 6
-          this.updateCurrentPos(coordinates[i - 1].getX(), coordinates[i - 1].getY(), false)
+          this.updateCurrentPos(coordinates[i - 1].getX(), coordinates[i - 1].getY(), false, chainLength, 1)  // the last parameter in this case does not matter.
         } 
       } 
       this.snapshots.push({
@@ -82,22 +89,23 @@ export class Jungle {
         match: false,
         prize: undefined
       })
-      console.log(`Trap coordinates ${trapCoord.getXY()}`);
-      
     }
-    console.log(`trapCoord ${trapCoord.getXY()} and currePos ${this.currentPos.getXY()}`);
     
     if (trapQueue.length !== 0) {
       if (trapQueue[0].getX() === this.currentPos.getX() && trapQueue[0].getY() === this.currentPos.getY()) {
-        this.updateCurrentPos(coordinates[length - 1].getX(), coordinates[length - 1].getY(), true)
+        trapValue = trapValues.shift()
+        console.log('Trap value: ', trapValue)
+        if (trapValue !== undefined) {
+          this.updateCurrentPos(coordinates[length - 1].getX(), coordinates[length - 1].getY(), true, chainLength, trapValue)
+        }
         trapQueue.shift() // dequeuing the element.
       } else {
         this.table[coordinates[length - 1].getY()][coordinates[length - 1].getX()] = 6
-        this.updateCurrentPos(coordinates[length - 1].getX(), coordinates[length - 1].getY(), false)
+        this.updateCurrentPos(coordinates[length - 1].getX(), coordinates[length - 1].getY(), false, chainLength, 1)  // the last parameter in this case does not matter.
       }
     } else {
       this.table[coordinates[length - 1].getY()][coordinates[length - 1].getX()] = 6
-      this.updateCurrentPos(coordinates[length - 1].getX(), coordinates[length - 1].getY(), false)
+      this.updateCurrentPos(coordinates[length - 1].getX(), coordinates[length - 1].getY(), false, chainLength, 1)  // the last parameter in this case does not matter.
     } 
     this.snapshots.push({
       table: this.getTableSerialized(),
@@ -169,10 +177,18 @@ export class Jungle {
     }
     return coordinates
   }
-  private updateCurrentPos(x: number, y: number, trap: boolean): void {
-    console.log(` bef current pos ${this.currentPos.getXY()}`);
+  private updateCurrentPos(x: number, y: number, trap: boolean, chainLength: number, trapValue: number): void {
+    console.log('Chains value inside method: ', chainLength);
     if (trap) {
-      this.table[this.currentPos.getY()][this.currentPos.getX()] = 20
+      // check if the player can break the trap.
+      if (chainLength + 40 >= trapValue) {
+        console.log('Trap value to be replaced by -1');
+        this.table[this.currentPos.getY()][this.currentPos.getX()] = -1
+      }
+      else {
+        console.log('Trap value to replaced by the trap value is: ', trapValue);
+        this.table[this.currentPos.getY()][this.currentPos.getX()] = trapValue
+      }
       this.table[y][x] = 6 // update current position.
     }
     else {
@@ -180,9 +196,7 @@ export class Jungle {
     }
     this.currentPos.setX(x)
     this.currentPos.setY(y)
-    console.log(` aft current pos ${this.currentPos.getXY()}`);
   }
-  
   
   private reallocateGems(): void {
     const gemMoved = 80
