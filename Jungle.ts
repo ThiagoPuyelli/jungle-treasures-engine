@@ -55,7 +55,6 @@ export class Jungle {
       let current = this.table[coordinates[i].getY()][coordinates[i].getX()]
       if (SPIKE.includes(current)) {
         this.table[coordinates[i].getY()][coordinates[i].getX()] += 50 // to add up 90. 
-        //trapCoord = new Coordinate(coordinates[i].getX(), coordinates[i].getY())
         trapQueue.push(new Coordinate(coordinates[i].getX(), coordinates[i].getY()))
       } else {
         this.table[coordinates[i].getY()][coordinates[i].getX()] += 90
@@ -100,12 +99,6 @@ export class Jungle {
       this.table[coordinates[length - 1].getY()][coordinates[length - 1].getX()] = 6
       this.updateCurrentPos(coordinates[length - 1].getX(), coordinates[length - 1].getY(), false)
     } 
-    // if (trapCoord.getX() === this.currentPos.getX() && trapCoord.getY() === this.currentPos.getY()) {
-    //   this.updateCurrentPos(coordinates[length - 1].getX(), coordinates[length - 1].getY(), true)
-    // } else {
-    //   this.updateCurrentPos(coordinates[length - 1].getX(), coordinates[length - 1].getY(), false)
-    // }
-    
     this.snapshots.push({
       table: this.getTableSerialized(),
       match: false,
