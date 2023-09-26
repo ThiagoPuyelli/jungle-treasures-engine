@@ -79,8 +79,8 @@ export class Jungle {
             console.log('Trap values after shifting', trapValues);
             if (trapResults.includes(true)) {
               chainWasGreater = true
-              //trapResults = this.resizingArray(trapResults) // it's the same array but only containing the remaining elements.
-              trapResults = []
+              trapResults = trapResults.filter((value) => value === true)
+              console.log('Trap results after cleaning it: ', trapResults);
             }
             console.log(`Trap value: ${trapValue} Trap result: ${chainWasGreater}`)
             if (trapValue !== undefined && chainWasGreater !== undefined) {
@@ -113,8 +113,8 @@ export class Jungle {
         console.log('Trap values after shifting', trapValues);
         if (trapResults.includes(true)) {
           chainWasGreater = true
-          //trapResults = trapResults = this.resizingArray(trapResults) // it's the same array but only containing the remaining elements.
-          trapResults = []
+          trapResults = trapResults.filter((value) => value === true)
+          console.log('Trap results after cleaning it: ', trapResults);
         }
         console.log(`Trap value: ${trapValue} Trap result: ${chainWasGreater}`)
         if (trapValue !== undefined && chainWasGreater !== undefined) {
