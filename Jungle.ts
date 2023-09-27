@@ -45,13 +45,11 @@ export class Jungle {
   
   public generateMove(coordinates: Coordinate[]) {
     let chainLength = 0
-    let result = 0
-    let chainWasGreater: boolean | undefined = false
+    let chainWasGreater: { value: boolean | undefined } = { value: false };
     const trapQueue: Coordinate[] = []
     const trapValues: number[] = []
     this.table[this.currentPos.getY()][this.currentPos.getX()] = 6
     let length = coordinates.length
-    let trapCoord: Coordinate = new Coordinate(-1, -1)
     let trapValue: number | undefined
     let trapResults: boolean[] = []
     
@@ -62,42 +60,9 @@ export class Jungle {
       trapResults.push(result.chainWasGreater) // push result.
       console.log('Trap results: ', trapResults)
       console.log(`Chain length: ${chainLength}`);
-      let current = this.table[coordinates[i].getY()][coordinates[i].getX()]
-      if (SPIKE.includes(current)) {
-        trapValues.push(this.table[coordinates[i].getY()][coordinates[i].getX()])
-        console.log('Trap Values: ', trapValues);
-        
-        this.table[coordinates[i].getY()][coordinates[i].getX()] += 50 // to add up 90. 
-        trapQueue.push(new Coordinate(coordinates[i].getX(), coordinates[i].getY()))
-      } else {
-        this.table[coordinates[i].getY()][coordinates[i].getX()] += 90
-      }
+      this.isSpike(trapValues, trapQueue, coordinates, i)
       if (i > 0 && i <= length - 1) {
-        if (trapQueue.length !== 0 && trapResults.length !== 0) {
-          if (trapQueue[0].getX() === this.currentPos.getX() && trapQueue[0].getY() === this.currentPos.getY()) {
-            trapValue = trapValues.shift()
-            console.log('Trap values after shifting', trapValues);
-            if (trapResults.includes(true)) {
-              chainWasGreater = true
-              trapResults = trapResults.filter((value) => value === true)
-              console.log('Trap results after cleaning it: ', trapResults);
-            }
-            console.log(`Trap value: ${trapValue} Trap result: ${chainWasGreater}`)
-            if (trapValue !== undefined && chainWasGreater !== undefined) {
-              console.log('pepe in')
-              this.updateCurrentPos(coordinates[i - 1].getX(), coordinates[i - 1].getY(), true, chainWasGreater, trapValue) // subtract 50 to get the actual value.
-            }
-            chainWasGreater = false
-            trapQueue.shift()
-            trapResults.shift()
-          } else {
-            this.table[coordinates[i - 1].getY()][coordinates[i - 1].getX()] = 6  
-            this.updateCurrentPos(coordinates[i - 1].getX(), coordinates[i - 1].getY(), false, false, 1) // the last parameter in this case does not matter.
-          }
-        } else {
-          this.table[coordinates[i - 1].getY()][coordinates[i - 1].getX()] = 6
-          this.updateCurrentPos(coordinates[i - 1].getX(), coordinates[i - 1].getY(), false, false, 1)  // the last parameter in this case does not matter.
-        } 
+        this.playerOnCellsInteraction(coordinates, trapQueue, trapResults, trapValues, trapValue, chainWasGreater, i)
       } 
       this.snapshots.push({
         table: this.getTableSerialized(),
@@ -106,31 +71,7 @@ export class Jungle {
       })
     }
     console.log(`Chain length: ${chainWasGreater}`);
-    if (trapQueue.length !== 0) {
-      if (trapQueue[0].getX() === this.currentPos.getX() && trapQueue[0].getY() === this.currentPos.getY()) {
-        console.log('Trap results: ', trapResults)
-        trapValue = trapValues.shift()
-        console.log('Trap values after shifting', trapValues);
-        if (trapResults.includes(true)) {
-          chainWasGreater = true
-          trapResults = trapResults.filter((value) => value === true)
-          console.log('Trap results after cleaning it: ', trapResults);
-        }
-        console.log(`Trap value: ${trapValue} Trap result: ${chainWasGreater}`)
-        if (trapValue !== undefined && chainWasGreater !== undefined) {
-          this.updateCurrentPos(coordinates[length - 1].getX(), coordinates[length - 1].getY(), true, chainWasGreater, trapValue)
-        }
-        chainWasGreater = false
-        trapQueue.shift()
-        trapResults.shift()
-      } else {
-        this.table[coordinates[length - 1].getY()][coordinates[length - 1].getX()] = 6
-        this.updateCurrentPos(coordinates[length - 1].getX(), coordinates[length - 1].getY(), false, false, 1)  // the last parameter in this case does not matter.
-      }
-    } else {
-      this.table[coordinates[length - 1].getY()][coordinates[length - 1].getX()] = 6
-      this.updateCurrentPos(coordinates[length - 1].getX(), coordinates[length - 1].getY(), false, false, 1)  // the last parameter in this case does not matter.
-    } 
+    this.playerOnCellsInteraction(coordinates, trapQueue, trapResults, trapValues, trapValue, chainWasGreater, length) 
     this.snapshots.push({
       table: this.getTableSerialized(),
       match: false,
@@ -141,19 +82,56 @@ export class Jungle {
     this.restoreEmptySlots()
   }
 
-  private resizingArray(traps: boolean[]): boolean[] {
-    let length = 0
-    let found = false
-    while (!found) {
-      if (traps.at(length) === true) {
-        found = true
+  private isSpike(trapValues: number[], trapQueue: Coordinate[], coordinates: Coordinate[], i: number) {
+    let current = this.table[coordinates[i].getY()][coordinates[i].getX()]
+      if (SPIKE.includes(current)) {
+        trapValues.push(this.table[coordinates[i].getY()][coordinates[i].getX()])
+        console.log('Trap Values: ', trapValues);
+        
+        this.table[coordinates[i].getY()][coordinates[i].getX()] += 50 // to add up 90. 
+        trapQueue.push(new Coordinate(coordinates[i].getX(), coordinates[i].getY()))
       } else {
-        length++
+        this.table[coordinates[i].getY()][coordinates[i].getX()] += 90
       }
-    }
-    const resizedArray = traps.slice(length + 1)
-    return resizedArray
   }
+
+  private playerOnCellsInteraction(
+    coordinates: Coordinate[],
+    trapQueue: Coordinate[],
+    trapResults: boolean[],
+    trapValues: number[],
+    trapValue: number | undefined,
+    obj:{value: boolean | undefined},
+    index: number,
+  ) {
+    if (trapQueue.length !== 0 && trapResults.length !== 0) {
+      if (trapQueue[0].getX() === this.currentPos.getX() && trapQueue[0].getY() === this.currentPos.getY()) {
+        trapValue = trapValues.shift()
+        console.log('Trap values after shifting', trapValues);
+        if (trapResults.includes(true)) {
+          obj.value = true
+          const indx = trapResults.findIndex(value => value === true)
+          if (indx !== -1)
+            trapResults.splice(0, indx + 1) // updating trapResult's array.
+          console.log('Trap results after cleaning it: ', trapResults)
+        }
+        console.log(`Trap value: ${trapValue} Trap result: ${obj.value}`)
+        if (trapValue !== undefined && obj.value !== undefined) {
+          console.log('pepe in')
+          this.updateCurrentPos(coordinates[index - 1].getX(), coordinates[index - 1].getY(), true, obj.value, trapValue) // subtract 50 to get the actual value.
+        }
+        obj.value = false
+        trapQueue.shift()
+      } else {
+        this.table[coordinates[index - 1].getY()][coordinates[index - 1].getX()] = 6  
+        this.updateCurrentPos(coordinates[index - 1].getX(), coordinates[index - 1].getY(), false, false, 1) // the last parameter in this case does not matter.
+      }
+    } else {
+      this.table[coordinates[index - 1].getY()][coordinates[index - 1].getX()] = 6
+      this.updateCurrentPos(coordinates[index - 1].getX(), coordinates[index - 1].getY(), false, false, 1)  // the last parameter in this case does not matter.
+    } 
+  }
+
 
   private calculateChainLength(coordinates: Coordinate, chain: number) {
     let currentCell: number = this.getCell(coordinates)

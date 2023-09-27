@@ -8,11 +8,13 @@
             "type": "node",
             "preLaunchTask": "tsc: build - tsconfig.json",
             "request": "launch",
-            "name": "Launch Program",
+            "name": "Debug typescript",
             "skipFiles": [
                 "<node_internals>/**"
             ],
             "program": "${workspaceFolder}/index.ts",
+            "runtimeArgs": ["-r", "ts-node/register", "-r", "tsconfig-paths/register" ],
+            "console": "integratedTerminal",
             "outFiles": [
                 "${workspaceFolder}/lib/**/*.js"
             ]
