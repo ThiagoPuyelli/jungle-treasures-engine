@@ -30,8 +30,8 @@ export class GenerateJungle {
       if (i < 50) {
         gemsPool.push(TREASURES[Math.floor(Math.random() * TREASURES.length)])
       } else {
-        const indexRandom = TREASURES[Math.floor(Math.random() * (TREASURES.length + 1))] // generate scorpion
-        if (indexRandom > TREASURES.length) {
+        const indexRandom = Math.floor(Math.random() * (TREASURES.length + 1))
+        if (indexRandom >= TREASURES.length) {
           gemsPool.push(SCORPION[Math.floor(Math.random() * SCORPION.length)])
         } else {
           gemsPool.push(TREASURES[indexRandom])
