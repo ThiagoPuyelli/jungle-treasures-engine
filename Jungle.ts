@@ -1,5 +1,5 @@
 import { Coordinate } from "./Coordinate"
-import { ISnapshot, SPIKE } from "./Types"
+import { ISnapshot, SCORPION, SPIKE } from "./Types"
 import { GenerateJungle } from "./generateJungle"
 import { showTable } from "./utils"
 
@@ -52,14 +52,15 @@ export class Jungle {
     let length = coordinates.length
     let trapValue: number | undefined
     let trapResults: boolean[] = []
+    let result: number
     
     // making a move.
     for (let i = 0; i < length; i++) {
+      console.log(`Lives in: ${this.lives}`)
       let result = this.calculateChainLength(coordinates[i], chainLength)
+      console.log(`chain length bef: ${result.newChain}`)
       chainLength = result.newChain
       trapResults.push(result.chainWasGreater) // push result.
-      console.log('Trap results: ', trapResults)
-      console.log(`Chain length: ${chainLength}`);
       this.isSpike(trapValues, trapQueue, coordinates, i)
       if (i > 0 && i <= length - 1) {
         this.playerOnCellsInteraction(coordinates, trapQueue, trapResults, trapValues, trapValue, chainWasGreater, i)
@@ -70,29 +71,50 @@ export class Jungle {
         prize: undefined
       })
     }
-    console.log(`Chain length: ${chainWasGreater}`);
-    this.playerOnCellsInteraction(coordinates, trapQueue, trapResults, trapValues, trapValue, chainWasGreater, length) 
+
+    this.playerOnCellsInteraction(coordinates, trapQueue, trapResults, trapValues, trapValue, chainWasGreater, length)
     this.snapshots.push({
       table: this.getTableSerialized(),
       match: false,
       prize: undefined
     })
+    console.log(`Lives out: ${this.lives}`)
     this.turns--
     this.reallocateGems() 
     this.restoreEmptySlots()
   }
-
+  // Check if the current cell is a spike, if so it adds it 50, otherwise 90 will be added.
   private isSpike(trapValues: number[], trapQueue: Coordinate[], coordinates: Coordinate[], i: number) {
     let current = this.table[coordinates[i].getY()][coordinates[i].getX()]
       if (SPIKE.includes(current)) {
-        trapValues.push(this.table[coordinates[i].getY()][coordinates[i].getX()])
-        console.log('Trap Values: ', trapValues);
-        
+        trapValues.push(this.table[coordinates[i].getY()][coordinates[i].getX()])        
         this.table[coordinates[i].getY()][coordinates[i].getX()] += 50 // to add up 90. 
         trapQueue.push(new Coordinate(coordinates[i].getX(), coordinates[i].getY()))
       } else {
         this.table[coordinates[i].getY()][coordinates[i].getX()] += 90
       }
+  }
+
+  // it checks if the player is adjacent to a scorpion.
+  public generateScorpionAttack() {
+    let backCell: number, leftCell: number, rightCell: number, frontCell: number
+    backCell = leftCell = rightCell = frontCell = 0
+    console.log(`current pos${this.currentPos.getXY()}`);
+    if (this.currentPos.getY() - 1 >= 0) {
+      backCell = this.table[this.currentPos.getY() - 1][(this.currentPos.getX())]
+    }
+    if (this.currentPos.getX() - 1 >= 0) {
+      leftCell = this.table[(this.currentPos.getY())][this.currentPos.getX() - 1]
+    }
+    if (this.currentPos.getX() + 1 < this.columns) {
+      rightCell = this.table[(this.currentPos.getY())][this.currentPos.getX()  + 1]
+    }
+    if (this.currentPos.getY() + 1 < this.rows) {
+      frontCell = this.table[this.currentPos.getY() + 1][(this.currentPos.getX())]
+    }
+    if (SCORPION.includes(leftCell) || SCORPION.includes(rightCell) || SCORPION.includes(frontCell) || SCORPION.includes(backCell)) {
+      this.lives -= 1
+    }
   }
 
   private playerOnCellsInteraction(
@@ -107,17 +129,13 @@ export class Jungle {
     if (trapQueue.length !== 0 && trapResults.length !== 0) {
       if (trapQueue[0].getX() === this.currentPos.getX() && trapQueue[0].getY() === this.currentPos.getY()) {
         trapValue = trapValues.shift()
-        console.log('Trap values after shifting', trapValues);
         if (trapResults.includes(true)) {
           obj.value = true
           const indx = trapResults.findIndex(value => value === true)
           if (indx !== -1)
             trapResults.splice(0, indx + 1) // updating trapResult's array.
-          console.log('Trap results after cleaning it: ', trapResults)
         }
-        console.log(`Trap value: ${trapValue} Trap result: ${obj.value}`)
         if (trapValue !== undefined && obj.value !== undefined) {
-          console.log('pepe in')
           this.updateCurrentPos(coordinates[index - 1].getX(), coordinates[index - 1].getY(), true, obj.value, trapValue) // subtract 50 to get the actual value.
         }
         obj.value = false
@@ -195,18 +213,12 @@ export class Jungle {
     return coordinates
   }
   private updateCurrentPos(x: number, y: number, trap: boolean, chainWasGreater: boolean, trapValue: number): void {
-    console.log('is trap?', trap);
-    console.log('chain value:', chainWasGreater);
-    
-    
     if (trap) {
       // check if the player can break the trap.
       if (chainWasGreater) {
-        console.log('Trap value to be replaced by -1');
         this.table[this.currentPos.getY()][this.currentPos.getX()] = -1
       }
       else {
-        console.log('Trap value to replaced by the trap value is: ', trapValue);
         this.table[this.currentPos.getY()][this.currentPos.getX()] = trapValue
       }
       this.table[y][x] = 6 // update current position.
