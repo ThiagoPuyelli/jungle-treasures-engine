@@ -27,7 +27,7 @@ export class GenerateJungle {
   public static generateGemsPool () {
     const gemsPool: number[] = []
     for (let i = 0;i < 500;i++) {
-      if (i < 50) {
+      if (i < 5) { // it should be 50, any lower value is meant for testing.
         gemsPool.push(TREASURES[Math.floor(Math.random() * TREASURES.length)])
       } else {
         const indexRandom = Math.floor(Math.random() * (TREASURES.length + 1))

@@ -45,8 +45,8 @@ export class Jungle {
   
   public generateMove(coordinates: Coordinate[]) {
     let chainLength = 0
-    const trapQueue: Coordinate[] = []
-    const trapValues: number[] = []
+    const obstacleQueue: Coordinate[] = []
+    const obstacleValues: number[] = []
     this.table[this.currentPos.getY()][this.currentPos.getX()] = 6
     let length = coordinates.length
     const chainValues: number[] = []
@@ -55,9 +55,9 @@ export class Jungle {
       console.log(`Lives in: ${this.lives}`)
       chainLength = this.calculateChainLength(coordinates[i], chainLength, chainValues)
       console.log(`chain length bef: ${chainLength}`)
-      this.isSpike(trapValues, trapQueue, coordinates, i)
+      this.isObstacle(obstacleValues, obstacleQueue, coordinates, i)
       if (i > 0 && i <= length - 1) {
-        this.playerOnCellsInteraction(coordinates, trapQueue, chainValues, trapValues, i)
+        this.playerOnCellsInteraction(coordinates, obstacleQueue, chainValues, obstacleValues, i)
       } 
       this.snapshots.push({
         table: this.getTableSerialized(),
@@ -66,7 +66,7 @@ export class Jungle {
       })
     }
 
-    this.playerOnCellsInteraction(coordinates, trapQueue, chainValues, trapValues, length)
+    this.playerOnCellsInteraction(coordinates, obstacleQueue, chainValues, obstacleValues, length)
     this.snapshots.push({
       table: this.getTableSerialized(),
       match: false,
@@ -77,13 +77,19 @@ export class Jungle {
     this.reallocateGems() 
     this.restoreEmptySlots()
   }
-  // Check if the current cell is a spike, if so it adds it 50, otherwise 90 will be added.
-  private isSpike(trapValues: number[], trapQueue: Coordinate[], coordinates: Coordinate[], i: number) {
+  // Check if the current cell is an obstacle, if so it adds a certain number to add up 90, otherwise 90 will be added.
+  private isObstacle(obstacleValues: number[], obstacleQueue: Coordinate[], coordinates: Coordinate[], i: number) {
     let current = this.table[coordinates[i].getY()][coordinates[i].getX()]
       if (SPIKE.includes(current)) {
-        trapValues.push(this.table[coordinates[i].getY()][coordinates[i].getX()])        
+        obstacleValues.push(this.table[coordinates[i].getY()][coordinates[i].getX()])        
         this.table[coordinates[i].getY()][coordinates[i].getX()] += 50 // to add up 90. 
-        trapQueue.push(new Coordinate(coordinates[i].getX(), coordinates[i].getY()))
+        obstacleQueue.push(new Coordinate(coordinates[i].getX(), coordinates[i].getY()))
+      
+      } else if (SCORPION.includes(current)) {
+        obstacleValues.push(this.table[coordinates[i].getY()][coordinates[i].getX()])        
+        this.table[coordinates[i].getY()][coordinates[i].getX()] += 40 // to add up 90. 
+        obstacleQueue.push(new Coordinate(coordinates[i].getX(), coordinates[i].getY()))
+      
       } else {
         this.table[coordinates[i].getY()][coordinates[i].getX()] += 90
       }
@@ -109,28 +115,29 @@ export class Jungle {
     if (SCORPION.includes(leftCell) || SCORPION.includes(rightCell) || SCORPION.includes(frontCell) || SCORPION.includes(backCell)) {
       this.lives -= 1
     }
+    console.log(`Lives out: ${this.lives}`)
   }
 
   private playerOnCellsInteraction(
     coordinates: Coordinate[],
-    trapQueue: Coordinate[],
+    obstacleQueue: Coordinate[],
     chainValues: number[],
-    trapValues: number[],
+    obstacleValues: number[],
     index: number,
   ) {
     let greater = false
-    let trapValue: number | undefined
+    let obstacleValue: number | undefined
     let chainValue: number | undefined
-    if (trapQueue.length !== 0 && chainValues.length !== 0) {
-      if (trapQueue[0].getX() === this.currentPos.getX() && trapQueue[0].getY() === this.currentPos.getY()) {
-        trapValue = trapValues.shift()
+    if (obstacleQueue.length !== 0 && chainValues.length !== 0) {
+      if (obstacleQueue[0].getX() === this.currentPos.getX() && obstacleQueue[0].getY() === this.currentPos.getY()) {
+        obstacleValue = obstacleValues.shift()
         chainValue = chainValues.shift()
-        greater = this.chainWasGreater(chainValue, trapValue)
-        if (trapValue !== undefined) {
-          this.updateCurrentPos(coordinates[index - 1].getX(), coordinates[index - 1].getY(), true, greater, trapValue) // subtract 50 to get the actual value.
+        greater = this.chainWasGreater(chainValue, obstacleValue)
+        if (obstacleValue !== undefined) {
+          this.updateCurrentPos(coordinates[index - 1].getX(), coordinates[index - 1].getY(), true, greater, obstacleValue) // subtract 50 to get the actual value.
         }
         greater = false
-        trapQueue.shift()
+        obstacleQueue.shift()
       } else {
         this.table[coordinates[index - 1].getY()][coordinates[index - 1].getX()] = 6  
         this.updateCurrentPos(coordinates[index - 1].getX(), coordinates[index - 1].getY(), false, false, 1) // the last parameter in this case does not matter.
@@ -164,9 +171,9 @@ export class Jungle {
       }
     } else if (SCORPION.includes(currentCell)) {
         if (chain + 50 >= currentCell) {
-          //chainValues.push(chain + 50)
+          chainValues.push(chain + 50)
         } else {
-          //chainValues.push(-1) // it was not greater.
+          chainValues.push(-1) // it was not greater.
           this.lives -= 1
         }
     }
@@ -219,14 +226,14 @@ export class Jungle {
     }
     return coordinates
   }
-  private updateCurrentPos(x: number, y: number, trap: boolean, chainWasGreater: boolean, trapValue: number): void {
+  private updateCurrentPos(x: number, y: number, trap: boolean, chainWasGreater: boolean, obstacleValue: number): void {
     if (trap) {
       // check if the player can break the trap.
       if (chainWasGreater) {
         this.table[this.currentPos.getY()][this.currentPos.getX()] = 0
       }
       else {
-        this.table[this.currentPos.getY()][this.currentPos.getX()] = trapValue
+        this.table[this.currentPos.getY()][this.currentPos.getX()] = obstacleValue
       }
       this.table[y][x] = 6 // update current position.
     }
