@@ -45,25 +45,19 @@ export class Jungle {
   
   public generateMove(coordinates: Coordinate[]) {
     let chainLength = 0
-    let chainWasGreater: { value: boolean | undefined } = { value: false };
     const trapQueue: Coordinate[] = []
     const trapValues: number[] = []
     this.table[this.currentPos.getY()][this.currentPos.getX()] = 6
     let length = coordinates.length
-    let trapValue: number | undefined
-    let trapResults: boolean[] = []
-    let result: number
-    
+    const chainValues: number[] = []
     // making a move.
     for (let i = 0; i < length; i++) {
       console.log(`Lives in: ${this.lives}`)
-      let result = this.calculateChainLength(coordinates[i], chainLength)
-      console.log(`chain length bef: ${result.newChain}`)
-      chainLength = result.newChain
-      trapResults.push(result.chainWasGreater) // push result.
+      chainLength = this.calculateChainLength(coordinates[i], chainLength, chainValues)
+      console.log(`chain length bef: ${chainLength}`)
       this.isSpike(trapValues, trapQueue, coordinates, i)
       if (i > 0 && i <= length - 1) {
-        this.playerOnCellsInteraction(coordinates, trapQueue, trapResults, trapValues, trapValue, chainWasGreater, i)
+        this.playerOnCellsInteraction(coordinates, trapQueue, chainValues, trapValues, i)
       } 
       this.snapshots.push({
         table: this.getTableSerialized(),
@@ -72,7 +66,7 @@ export class Jungle {
       })
     }
 
-    this.playerOnCellsInteraction(coordinates, trapQueue, trapResults, trapValues, trapValue, chainWasGreater, length)
+    this.playerOnCellsInteraction(coordinates, trapQueue, chainValues, trapValues, length)
     this.snapshots.push({
       table: this.getTableSerialized(),
       match: false,
@@ -120,25 +114,22 @@ export class Jungle {
   private playerOnCellsInteraction(
     coordinates: Coordinate[],
     trapQueue: Coordinate[],
-    trapResults: boolean[],
+    chainValues: number[],
     trapValues: number[],
-    trapValue: number | undefined,
-    obj:{value: boolean | undefined},
     index: number,
   ) {
-    if (trapQueue.length !== 0 && trapResults.length !== 0) {
+    let greater = false
+    let trapValue: number | undefined
+    let chainValue: number | undefined
+    if (trapQueue.length !== 0 && chainValues.length !== 0) {
       if (trapQueue[0].getX() === this.currentPos.getX() && trapQueue[0].getY() === this.currentPos.getY()) {
         trapValue = trapValues.shift()
-        if (trapResults.includes(true)) {
-          obj.value = true
-          const indx = trapResults.findIndex(value => value === true)
-          if (indx !== -1)
-            trapResults.splice(0, indx + 1) // updating trapResult's array.
+        chainValue = chainValues.shift()
+        greater = this.chainWasGreater(chainValue, trapValue)
+        if (trapValue !== undefined) {
+          this.updateCurrentPos(coordinates[index - 1].getX(), coordinates[index - 1].getY(), true, greater, trapValue) // subtract 50 to get the actual value.
         }
-        if (trapValue !== undefined && obj.value !== undefined) {
-          this.updateCurrentPos(coordinates[index - 1].getX(), coordinates[index - 1].getY(), true, obj.value, trapValue) // subtract 50 to get the actual value.
-        }
-        obj.value = false
+        greater = false
         trapQueue.shift()
       } else {
         this.table[coordinates[index - 1].getY()][coordinates[index - 1].getX()] = 6  
@@ -150,21 +141,37 @@ export class Jungle {
     } 
   }
 
-
-  private calculateChainLength(coordinates: Coordinate, chain: number) {
-    let currentCell: number = this.getCell(coordinates)
-    let chainWasGreater: boolean = false;
-    
-    if (!SPIKE.includes(currentCell)) {
-      chain += 1
-    } else if (chain + 40 >= currentCell) { // check if the player's chain is greater than the trap's value.
-      chain -= currentCell - 40
-      chainWasGreater = true
-    } else {
-      this.lives -= 1
-      chain = 0
+  // checks whether the player could break the obstacle or not.
+  private chainWasGreater(chainValue: number | undefined, obstacle: number | undefined) {
+    if (chainValue === undefined || obstacle === undefined) {
+      return false
     }
-    return {newChain: chain, chainWasGreater}
+    if (chainValue >= obstacle) {
+      return true
+    }
+    return false
+  }
+
+
+  private calculateChainLength(coordinates: Coordinate, chain: number, chainValues: number[]) {
+    let currentCell: number = this.getCell(coordinates)
+    if (SPIKE.includes(currentCell)) {
+      if (chain + 40 >= currentCell) {
+        chainValues.push(chain + 40)
+      } else {
+        chainValues.push(-1) // it was not greater.
+        this.lives -= 1
+      }
+    } else if (SCORPION.includes(currentCell)) {
+        if (chain + 50 >= currentCell) {
+          //chainValues.push(chain + 50)
+        } else {
+          //chainValues.push(-1) // it was not greater.
+          this.lives -= 1
+        }
+    }
+    chain += 1
+    return chain
   }
 
   public validateInput (move: string) {
@@ -216,7 +223,7 @@ export class Jungle {
     if (trap) {
       // check if the player can break the trap.
       if (chainWasGreater) {
-        this.table[this.currentPos.getY()][this.currentPos.getX()] = -1
+        this.table[this.currentPos.getY()][this.currentPos.getX()] = 0
       }
       else {
         this.table[this.currentPos.getY()][this.currentPos.getX()] = trapValue
