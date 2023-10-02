@@ -112,12 +112,24 @@ export class Jungle {
     if (this.currentPos.getY() + 1 < this.rows) {
       frontCell = this.table[this.currentPos.getY() + 1][(this.currentPos.getX())]
     }
-    if (SCORPION.includes(leftCell) || SCORPION.includes(rightCell) || SCORPION.includes(frontCell) || SCORPION.includes(backCell)) {
-      this.lives -= 1
-    }
+    this.attackPlayer(backCell, leftCell, rightCell, frontCell)
     console.log(`Lives out: ${this.lives}`)
   }
 
+  private attackPlayer(backCell: number, leftCell: number, rightCell: number, frontCell: number) {
+    if (SCORPION.includes(backCell)) {
+      this.lives -= 1
+    }
+    if (SCORPION.includes(leftCell)) {
+      this.lives -= 1
+    }
+    if (SCORPION.includes(rightCell)) {
+      this.lives -= 1
+    }
+    if (SCORPION.includes(frontCell)) {
+      this.lives -= 1
+    }
+  }
   private playerOnCellsInteraction(
     coordinates: Coordinate[],
     obstacleQueue: Coordinate[],
