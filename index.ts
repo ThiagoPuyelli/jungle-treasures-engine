@@ -30,7 +30,6 @@ const play = async () => {
     const positions = jungle.validateInput(inputs[0])
     if (positions) {
       jungle.generateMove(positions)
-      jungle.generateScorpionAttack()
     } else {
       console.log('wrong input!\n')
     }

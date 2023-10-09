@@ -90,6 +90,7 @@ export class Jungle {
     })
     console.log(`Lives out: ${this.lives}`)
     this.turns--
+    this.generateScorpionAttack()
     this.reallocateGems() 
     this.restoreEmptySlots()
   }
@@ -146,7 +147,7 @@ export class Jungle {
   }
 
   // it checks if the player is adjacent to a scorpion.
-  public generateScorpionAttack() {
+  private generateScorpionAttack() {
     let backCell: number, leftCell: number, rightCell: number, frontCell: number
     backCell = leftCell = rightCell = frontCell = 0
     console.log(`current pos${this.currentPos.getXY()}`);
@@ -227,14 +228,14 @@ export class Jungle {
   private calculateChainLength(coordinates: Coordinate, chain: number, chainValues: number[]) {
     let currentCell: number = this.getCell(coordinates)
     if (SPIKE.includes(currentCell)) {
-      if (chain + 40 >= currentCell) {
+      if (chain >= currentCell % 10) {
         chainValues.push(chain + 40)
       } else {
         chainValues.push(-1) // it was not greater.
         this.lives -= 1
       }
     } else if (SCORPION.includes(currentCell)) {
-        if (chain + 50 >= currentCell) {
+        if (chain >= currentCell % 10) {
           chainValues.push(chain + 50)
         } else {
           chainValues.push(-1) // it was not greater.
