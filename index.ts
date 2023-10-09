@@ -22,6 +22,7 @@ const play = async () => {
   let inputValue: any = []
   const table = GenerateJungle.generateDefault()
   const jungle = new Jungle(table, new Coordinate(3, 0), INITIAL_TURNS, LIVES) 
+  Jungle.displayTreasuresGoal()
   showTable(jungle.getTable())
   inputValue = await question("Introducir coordenadas: ")
   while (inputValue!='end') {
@@ -34,6 +35,7 @@ const play = async () => {
       console.log('wrong input!\n')
     }
     await showSnapshots(jungle.getSnapshots())
+    Jungle.displayTreasuresGoal()
     inputValue = await question("Introducir Coordenadas: \n")
     jungle.setSnapshots([])
   }

@@ -13,6 +13,7 @@ export class Jungle {
   private snapshots: ISnapshot[] = []
   private gemsPool: number[]  // In engine, implementation with stage
   private lives: number
+  public static goal: number[]
 
   constructor (table: number[][], currentPos: Coordinate, turns: number, lives: number) {
     this.table = table
@@ -20,6 +21,7 @@ export class Jungle {
     this.turns = turns
     this.gemsPool = GenerateJungle.generateGemsPool()
     this.lives = lives
+    Jungle.goal = this.generateTreasuresGoal()
   }
 
   getScore () { return this.score }
@@ -41,6 +43,20 @@ export class Jungle {
 
   public putInCell (coordinate: Coordinate, cell: number) {
     this.table[coordinate.getY()][coordinate.getX()] = cell
+  }
+
+  public static displayTreasuresGoal(): void {
+    console.log("GOALS")
+    for (let i = 0; i < this.goal.length; i++) {
+      if (i === 0) {
+        console.log(`${this.goal[i]} rubies`)
+      } else if (i === 1) {
+        console.log(`${this.goal[i]} diamonds`)
+      } else {
+        console.log(`${this.goal[i]} emeralds`)
+      }
+      
+    }
   }
   
   public generateMove(coordinates: Coordinate[]) {
@@ -77,6 +93,39 @@ export class Jungle {
     this.reallocateGems() 
     this.restoreEmptySlots()
   }
+
+  private generateTreasuresGoal(): number[] {
+    const op1 = [30, 30, 10] // Ruby, Diamond, Emerald
+    const op2 = [10, 30, 30]
+    const op3 = [30, 10, 30]
+    const index = Math.floor(Math.random() * 2)
+    if (index === 0) {
+      return op1
+    } else if (index === 1) {
+      return op2
+    } else {
+      return op3
+    }
+  }
+  
+  private collectTreasure(treasure: number): void {
+    const RUBY = 1
+    const DIAMOND = 2
+    if (treasure === RUBY) {
+      if (Jungle.goal[0] > 0) {
+        Jungle.goal[0] -= 1
+      }
+    } else if (treasure === DIAMOND) {
+      if (Jungle.goal[1] > 0) {
+        Jungle.goal[1] -= 1
+      }
+    } else {
+      if (Jungle.goal[2] > 0) {
+        Jungle.goal[2] -= 1
+      }
+    }
+  }
+
   // Check if the current cell is an obstacle, if so it adds a certain number to add up 90, otherwise 90 will be added.
   private isObstacle(obstacleValues: number[], obstacleQueue: Coordinate[], coordinates: Coordinate[], i: number) {
     let current = this.table[coordinates[i].getY()][coordinates[i].getX()]
@@ -91,6 +140,7 @@ export class Jungle {
         obstacleQueue.push(new Coordinate(coordinates[i].getX(), coordinates[i].getY()))
       
       } else {
+        this.collectTreasure(current)
         this.table[coordinates[i].getY()][coordinates[i].getX()] += 90
       }
   }
@@ -130,6 +180,7 @@ export class Jungle {
       this.lives -= 1
     }
   }
+  // It generates all the functionality related to the player stepping on traps, normal cells etc.
   private playerOnCellsInteraction(
     coordinates: Coordinate[],
     obstacleQueue: Coordinate[],
@@ -140,6 +191,7 @@ export class Jungle {
     let greater = false
     let obstacleValue: number | undefined
     let chainValue: number | undefined
+    let currentTreasure: number
     if (obstacleQueue.length !== 0 && chainValues.length !== 0) {
       if (obstacleQueue[0].getX() === this.currentPos.getX() && obstacleQueue[0].getY() === this.currentPos.getY()) {
         obstacleValue = obstacleValues.shift()
