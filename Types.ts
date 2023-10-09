@@ -3,7 +3,7 @@ export const TREASURES = [1, 2, 3] // Ruby, Diamond, Emerald
 
 //export const TRAPS = [4, 5] // Spike, Scorpion
 export const SPIKE = [43, 44, 45, 46, 47]
-export const SCORPION = [50, 51, 52, 53, 54, 55, 56, 57, 58]
+export const SCORPION = [55, 56, 57, 58]
 
 export const PLAYER = 6
 export const LIVES = 3
