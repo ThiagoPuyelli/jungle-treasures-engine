@@ -81,11 +81,6 @@ export class Jungle {
         prize: undefined
       })
     }
-    if (this.lives <= 0) {
-      this.reallocateGems() 
-      this.restoreEmptySlots()
-      return true  
-    }
     this.playerOnCellsInteraction(coordinates, obstacleQueue, chainValues, obstacleValues, length)
     this.snapshots.push({
       table: this.getTableSerialized(),
@@ -93,10 +88,13 @@ export class Jungle {
       prize: undefined
     })
     console.log(`Lives out: ${this.lives}`)
+    
     this.turns--
+    if (this.generateScorpionAttack()) return true // game over.
+    if (this.lives <= 0) 
+      return true
     this.reallocateGems() 
     this.restoreEmptySlots()
-    if (this.generateScorpionAttack()) return true // game over.
     return false
   }
 
