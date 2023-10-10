@@ -59,7 +59,7 @@ export class Jungle {
     }
   }
   
-  public generateMove(coordinates: Coordinate[]) {
+  public generateMove(coordinates: Coordinate[]): boolean {
     let chainLength = 0
     const obstacleQueue: Coordinate[] = []
     const obstacleValues: number[] = []
@@ -81,7 +81,11 @@ export class Jungle {
         prize: undefined
       })
     }
-
+    if (this.lives <= 0) {
+      this.reallocateGems() 
+      this.restoreEmptySlots()
+      return true  
+    }
     this.playerOnCellsInteraction(coordinates, obstacleQueue, chainValues, obstacleValues, length)
     this.snapshots.push({
       table: this.getTableSerialized(),
@@ -90,9 +94,10 @@ export class Jungle {
     })
     console.log(`Lives out: ${this.lives}`)
     this.turns--
-    this.generateScorpionAttack()
     this.reallocateGems() 
     this.restoreEmptySlots()
+    if (this.generateScorpionAttack()) return true // game over.
+    return false
   }
 
   private generateTreasuresGoal(): number[] {
@@ -146,8 +151,8 @@ export class Jungle {
       }
   }
 
-  // it checks if the player is adjacent to a scorpion.
-  private generateScorpionAttack() {
+  // it checks if the player is adjacent to a scorpion. It also returns true if the player is dead, false otherwise.
+  private generateScorpionAttack(): boolean {
     let backCell: number, leftCell: number, rightCell: number, frontCell: number
     backCell = leftCell = rightCell = frontCell = 0
     console.log(`current pos${this.currentPos.getXY()}`);
@@ -163,11 +168,13 @@ export class Jungle {
     if (this.currentPos.getY() + 1 < this.rows) {
       frontCell = this.table[this.currentPos.getY() + 1][(this.currentPos.getX())]
     }
-    this.attackPlayer(backCell, leftCell, rightCell, frontCell)
+    if (this.attackPlayer(backCell, leftCell, rightCell, frontCell)) return true
     console.log(`Lives out: ${this.lives}`)
+    return false
   }
 
-  private attackPlayer(backCell: number, leftCell: number, rightCell: number, frontCell: number) {
+  // it simulates when the scorpion attacks the player and returns true if it's killed it and false otherwise.
+  private attackPlayer(backCell: number, leftCell: number, rightCell: number, frontCell: number): boolean {
     if (SCORPION.includes(backCell)) {
       this.lives -= 1
     }
@@ -180,6 +187,7 @@ export class Jungle {
     if (SCORPION.includes(frontCell)) {
       this.lives -= 1
     }
+    return this.lives <= 0
   }
   // It generates all the functionality related to the player stepping on traps, normal cells etc.
   private playerOnCellsInteraction(
