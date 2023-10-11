@@ -1,5 +1,5 @@
 import { Coordinate } from "./Coordinate"
-import { ISnapshot, SCORPION, SPIKE } from "./Types"
+import { DEATHSYMBOL, ISnapshot, SCORPION, SPIKE } from "./Types"
 import { GenerateJungle } from "./generateJungle"
 import { showTable } from "./utils"
 
@@ -66,6 +66,8 @@ export class Jungle {
     this.table[this.currentPos.getY()][this.currentPos.getX()] = 6
     let length = coordinates.length
     const chainValues: number[] = []
+    let gameOver = false
+    let breakLoop = false
     // making a move.
     for (let i = 0; i < length; i++) {
       console.log(`Lives in: ${this.lives}`)
@@ -73,29 +75,25 @@ export class Jungle {
       console.log(`chain length bef: ${chainLength}`)
       this.isObstacle(obstacleValues, obstacleQueue, coordinates, i)
       if (i > 0 && i <= length - 1) {
-        this.playerOnCellsInteraction(coordinates, obstacleQueue, chainValues, obstacleValues, i)
+        breakLoop = this.playerOnCellsInteraction(coordinates, obstacleQueue, chainValues, obstacleValues, i)
       } 
-      this.snapshots.push({
-        table: this.getTableSerialized(),
-        match: false,
-        prize: undefined
-      })
+      this.snapshots.push({table: this.getTableSerialized(), match: false, prize: undefined})
+      if (breakLoop) break // if the player has run out of lives, break the loop.
     }
-    this.playerOnCellsInteraction(coordinates, obstacleQueue, chainValues, obstacleValues, length)
-    this.snapshots.push({
-      table: this.getTableSerialized(),
-      match: false,
-      prize: undefined
-    })
+    if (!breakLoop) {
+      this.playerOnCellsInteraction(coordinates, obstacleQueue, chainValues, obstacleValues, length)
+      this.snapshots.push({table: this.getTableSerialized(), match: false, prize: undefined})
+    } 
     console.log(`Lives out: ${this.lives}`)
-    
     this.turns--
-    if (this.generateScorpionAttack()) return true // game over.
-    if (this.lives <= 0) 
-      return true
+    if (this.generateScorpionAttack()) { // game over.
+      this.putInCell(this.currentPos, this.getCell(this.currentPos) + DEATHSYMBOL)
+      this.snapshots.push({table: this.getTableSerialized(), match: false, prize: undefined }) 
+      gameOver = true
+    } 
     this.reallocateGems() 
     this.restoreEmptySlots()
-    return false
+    return gameOver
   }
 
   private generateTreasuresGoal(): number[] {
@@ -145,7 +143,8 @@ export class Jungle {
       
       } else {
         this.collectTreasure(current)
-        this.table[coordinates[i].getY()][coordinates[i].getX()] += 90
+        if (this.lives > 0)
+          this.table[coordinates[i].getY()][coordinates[i].getX()] += 90
       }
   }
 
@@ -187,37 +186,42 @@ export class Jungle {
     }
     return this.lives <= 0
   }
-  // It generates all the functionality related to the player stepping on traps, normal cells etc.
+  // It generates all the functionality related to the player stepping on traps, treasures etc and return whether the player is dead or not.
   private playerOnCellsInteraction(
     coordinates: Coordinate[],
     obstacleQueue: Coordinate[],
     chainValues: number[],
     obstacleValues: number[],
-    index: number,
-  ) {
+    index: number
+  ): boolean {
     let greater = false
     let obstacleValue: number | undefined
     let chainValue: number | undefined
-    let currentTreasure: number
+    let dead = false
     if (obstacleQueue.length !== 0 && chainValues.length !== 0) {
       if (obstacleQueue[0].getX() === this.currentPos.getX() && obstacleQueue[0].getY() === this.currentPos.getY()) {
         obstacleValue = obstacleValues.shift()
         chainValue = chainValues.shift()
         greater = this.chainWasGreater(chainValue, obstacleValue)
-        if (obstacleValue !== undefined) {
-          this.updateCurrentPos(coordinates[index - 1].getX(), coordinates[index - 1].getY(), true, greater, obstacleValue) // subtract 50 to get the actual value.
+        if (obstacleValue !== undefined){
+          dead = this.updateCurrentPos(coordinates[index - 1].getX(), coordinates[index - 1].getY(), true, greater, obstacleValue) // subtract 50 to get the actual value.
         }
         greater = false
         obstacleQueue.shift()
+        if (dead) {
+          return true // the player is dead.
+        }
       } else {
         this.table[coordinates[index - 1].getY()][coordinates[index - 1].getX()] = 6  
-        this.updateCurrentPos(coordinates[index - 1].getX(), coordinates[index - 1].getY(), false, false, 1) // the last parameter in this case does not matter.
+        dead = this.updateCurrentPos(coordinates[index - 1].getX(), coordinates[index - 1].getY(), false, false, 1) // the last parameter in this case does not matter.
       }
     } else {
       this.table[coordinates[index - 1].getY()][coordinates[index - 1].getX()] = 6
-      this.updateCurrentPos(coordinates[index - 1].getX(), coordinates[index - 1].getY(), false, false, 1)  // the last parameter in this case does not matter.
-    } 
+      dead = this.updateCurrentPos(coordinates[index - 1].getX(), coordinates[index - 1].getY(), false, false, 1)  // the last parameter in this case does not matter.
+    }
+    return false // the player is alive.
   }
+
 
   // checks whether the player could break the obstacle or not.
   private chainWasGreater(chainValue: number | undefined, obstacle: number | undefined) {
@@ -238,14 +242,12 @@ export class Jungle {
         chainValues.push(chain + 40)
       } else {
         chainValues.push(-1) // it was not greater.
-        this.lives -= 1
       }
     } else if (SCORPION.includes(currentCell)) {
         if (chain >= currentCell % 10) {
           chainValues.push(chain + 50)
         } else {
           chainValues.push(-1) // it was not greater.
-          this.lives -= 1
         }
     }
     chain += 1
@@ -297,24 +299,33 @@ export class Jungle {
     }
     return coordinates
   }
-  private updateCurrentPos(x: number, y: number, trap: boolean, chainWasGreater: boolean, obstacleValue: number): void {
+  private updateCurrentPos(x: number, y: number, trap: boolean, chainWasGreater: boolean, obstacleValue: number): boolean {
+    let dead = false
     if (trap) {
       // check if the player can break the trap.
       if (chainWasGreater) {
         this.table[this.currentPos.getY()][this.currentPos.getX()] = 0
+      } else {
+        this.lives -= 1
+        if (this.lives <= 0) {
+          this.table[this.currentPos.getY()][this.currentPos.getX()] = this.getCell(this.currentPos) + DEATHSYMBOL
+          dead = true
+        } else {
+          this.table[this.currentPos.getY()][this.currentPos.getX()] = obstacleValue
+        }
       }
-      else {
-        this.table[this.currentPos.getY()][this.currentPos.getX()] = obstacleValue
+      if (!dead){
+        this.table[y][x] = 6
       }
-      this.table[y][x] = 6 // update current position.
-    }
-    else {
-      this.table[this.currentPos.getY()][this.currentPos.getX()] = 0
+      } else {
+        this.table[this.currentPos.getY()][this.currentPos.getX()] = 0
     }
     this.currentPos.setX(x)
     this.currentPos.setY(y)
+    return dead
   }
-  
+
+
   private reallocateGems(): void {
     const gemMoved = 80
     const queue: Coordinate[] = []
@@ -323,7 +334,7 @@ export class Jungle {
         let current = this.table[r][c]
         if (current === 0) {
           queue.push(new Coordinate(r, c))
-        } else if (current !== 6 && !SPIKE.includes(current) && !(queue.length === 0) && current !== 0) {
+        } else if (current !== 6 && !SPIKE.includes(current) && !(queue.length === 0) && current !== 0 && current !== 6 + DEATHSYMBOL) {
           let coord: Coordinate | undefined = queue.shift()
           if (coord !== undefined) {
             this.table[coord.getX()][coord.getY()] = current + gemMoved
