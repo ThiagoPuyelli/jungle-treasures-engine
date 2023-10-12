@@ -10,6 +10,7 @@ export const LIVES = 3
 
 export const INITIAL_TURNS = 30
 export const DEATHSYMBOL = 20
+export const DOOR = 10
 
 export type ITable = number[][]
 
