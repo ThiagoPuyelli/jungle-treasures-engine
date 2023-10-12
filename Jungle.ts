@@ -99,7 +99,7 @@ export class Jungle {
     this.turns--
     if (this.lives > 0) {
       if (this.generateScorpionAttack()) { // game over.
-        this.putInCell(this.currentPos, this.getCell(this.currentPos) + DEATHSYMBOL)
+        this.putInCell(this.currentPos, DEATHSYMBOL)
         this.snapshots.push({table: this.getTableSerialized(), match: false, prize: undefined }) 
         gameOver = true
       }
@@ -156,16 +156,16 @@ export class Jungle {
     let current = this.table[coordinates[i].getY()][coordinates[i].getX()]
       if (SPIKE.includes(current)) {
         obstacleValues.push(this.table[coordinates[i].getY()][coordinates[i].getX()])        
-        this.table[coordinates[i].getY()][coordinates[i].getX()] += 50 // to add up 90. 
+        this.table[coordinates[i].getY()][coordinates[i].getX()] += 900 // to add up 90. 
         obstacleQueue.push(new Coordinate(coordinates[i].getX(), coordinates[i].getY()))
       
       } else if (SCORPION.includes(current)) {
         obstacleValues.push(this.table[coordinates[i].getY()][coordinates[i].getX()])        
-        this.table[coordinates[i].getY()][coordinates[i].getX()] += 40 // to add up 90. 
+        this.table[coordinates[i].getY()][coordinates[i].getX()] += 900 // to add up 90. 
         obstacleQueue.push(new Coordinate(coordinates[i].getX(), coordinates[i].getY()))
       
       } else if (current === DOOR) {
-        this.table[coordinates[i].getY()][coordinates[i].getX()] += 80 // to add up 90
+        this.table[coordinates[i].getY()][coordinates[i].getX()] += 900 // to add up 90
       
       } else {
         this.collectTreasure(current)
@@ -239,11 +239,17 @@ export class Jungle {
           return true // the player is dead.
         }
       } else {
-        this.table[coordinates[index - 1].getY()][coordinates[index - 1].getX()] = 6  
+        //this.table[coordinates[index - 1].getY()][coordinates[index - 1].getX()] = 6  
+        if (!this.playerOnTrap(coordinates[index - 1].getY(), coordinates[index - 1].getX())) {
+          this.table[coordinates[index - 1].getY()][coordinates[index - 1].getX()] = 6  
+        }
         dead = this.updateCurrentPos(coordinates[index - 1].getX(), coordinates[index - 1].getY(), false, false, 1) // the last parameter in this case does not matter.
       }
     } else {
-      this.table[coordinates[index - 1].getY()][coordinates[index - 1].getX()] = 6
+      //this.table[coordinates[index - 1].getY()][coordinates[index - 1].getX()] = 6
+      if (!this.playerOnTrap(coordinates[index - 1].getY(), coordinates[index - 1].getX())) {
+        this.table[coordinates[index - 1].getY()][coordinates[index - 1].getX()] = 6  
+      }
       dead = this.updateCurrentPos(coordinates[index - 1].getX(), coordinates[index - 1].getY(), false, false, 1)  // the last parameter in this case does not matter.
     }
     this.playerAtDoor(doorCoor)
@@ -374,14 +380,16 @@ export class Jungle {
       } else {
         this.lives -= 1
         if (this.lives <= 0) {
-          this.table[this.currentPos.getY()][this.currentPos.getX()] = this.getCell(this.currentPos) + DEATHSYMBOL
+          this.table[this.currentPos.getY()][this.currentPos.getX()] = DEATHSYMBOL
           dead = true
         } else {
           this.table[this.currentPos.getY()][this.currentPos.getX()] = obstacleValue
         }
       }
-      if (!dead){
-        this.table[y][x] = 6
+      if (!dead) {
+        if (!this.playerOnTrap(y, x)) {
+          this.table[y][x] = 6
+        }
       }
     } else {
         this.table[this.currentPos.getY()][this.currentPos.getX()] = 0
@@ -393,6 +401,39 @@ export class Jungle {
     this.currentPos.setY(y)
     return dead
   }
+  // if it's a trap, a 6 is added in front of it.
+  private playerOnTrap(y: number, x: number): boolean {
+    let getValue: number | undefined = this.getCell(new Coordinate(x, y))
+    getValue = this.removeFirstDigit(getValue)
+    if (getValue !== undefined) {
+      if (SPIKE.includes(getValue) || SCORPION.includes(getValue)) {
+        const numberStr = getValue.toString()
+        const modifiedStr = "6" + numberStr
+        const modifiedNumber = Number(modifiedStr)
+        this.table[y][x] = modifiedNumber
+        return true
+      }
+    }
+    return false
+  }
+
+  private removeFirstDigit(number: number): number | undefined {
+    // Convert the number to a string
+    const numberStr = number.toString()
+    // Check if the string representation of the number has at least 2 characters
+    if (numberStr.length >= 2) {
+      // Remove the first character (which is the '9' in your example)
+      const modifiedStr = numberStr.slice(1)
+  
+      // Convert the modified string back to a number
+      const modifiedNumber = Number(modifiedStr)
+  
+      return modifiedNumber
+    } else {
+      // If the number has only 1 digit or is negative, return undefined or handle it as needed
+      return undefined;
+    }
+  }
 
   private reallocateGems(): void {
     const gemMoved = 80
@@ -402,7 +443,7 @@ export class Jungle {
         let current = this.table[r][c]
         if (current === 0) {
           queue.push(new Coordinate(c, r))
-        } else if (current !== 6 && !SPIKE.includes(current) && !(queue.length === 0) && current !== 0 && current !== 6 + DEATHSYMBOL && current !== DOOR) {
+        } else if (current !== 6 && !SPIKE.includes(current) && !(queue.length === 0) && current !== 0 && current !== DEATHSYMBOL && current !== DOOR) {
           let coord: Coordinate | undefined = queue.shift()
           if (coord !== undefined) {
             if (current > 10) {
