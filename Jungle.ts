@@ -59,7 +59,7 @@ export class Jungle {
       
     }
   }
-  
+
   public generateMove(coordinates: Coordinate[]): boolean {
     let chainLength = 0
     const obstacleQueue: Coordinate[] = []
@@ -70,6 +70,11 @@ export class Jungle {
     const doorCoordinates: Coordinate[] = [new Coordinate(2, 6), new Coordinate(3, 6), new Coordinate(4, 6)]
     let gameOver = false
     let breakLoop = false
+    this.snapshots.push({
+      table: this.getTableSerialized(),
+      match: false,
+      prize: undefined
+    })
     // making a move.
     for (let i = 0; i < length; i++) {
       console.log(`Lives in: ${this.lives}`)
@@ -80,24 +85,34 @@ export class Jungle {
         breakLoop = this.playerOnCellsInteraction(coordinates, obstacleQueue, chainValues, obstacleValues, i, doorCoordinates)
       } 
       this.snapshots.push({table: this.getTableSerialized(), match: false, prize: undefined})
-      if (breakLoop) break // if the player has run out of lives, break the loop.
+      if (breakLoop) {
+        gameOver = true
+        break
+      } // if the player has run out of lives, break the loop.
     }
+    this.score += (chainLength * 10)*(chainLength)
     if (!breakLoop) {
       this.playerOnCellsInteraction(coordinates, obstacleQueue, chainValues, obstacleValues, length, doorCoordinates)
       this.snapshots.push({table: this.getTableSerialized(), match: false, prize: undefined})
     } 
     console.log(`Lives out: ${this.lives}`)
     this.turns--
-    if (this.generateScorpionAttack()) { // game over.
-      this.putInCell(this.currentPos, this.getCell(this.currentPos) + DEATHSYMBOL)
-      this.snapshots.push({table: this.getTableSerialized(), match: false, prize: undefined }) 
+    if (this.lives > 0) {
+      if (this.generateScorpionAttack()) { // game over.
+        this.putInCell(this.currentPos, this.getCell(this.currentPos) + DEATHSYMBOL)
+        this.snapshots.push({table: this.getTableSerialized(), match: false, prize: undefined }) 
+        gameOver = true
+      }
+      
+      if (this.isGoalReached()) {
+        this.openDoor()
+      } 
+      this.reallocateGems() 
+      this.restoreEmptySlots()
+    } else {
+      this.resetTable()
       gameOver = true
     }
-    if (this.isGoalReached()) {
-      this.openDoor()
-    } 
-    this.reallocateGems() 
-    this.restoreEmptySlots()
     return gameOver
   }
   
@@ -455,6 +470,16 @@ export class Jungle {
       match: false,
       prize: undefined
     })
+  }
+
+  private resetTable () {
+    for (const y in this.table) {
+      for (const x in this.table[y]) {
+        if (this.table[y][x] > 80) {
+          this.table[y][x] %= (this.table[y][x] < 900 ? 90 : 900)
+        }
+      }
+    }
   }
 
 }
