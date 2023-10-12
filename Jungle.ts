@@ -67,7 +67,7 @@ export class Jungle {
     this.table[this.currentPos.getY()][this.currentPos.getX()] = 6
     let length = coordinates.length
     const chainValues: number[] = []
-    const doorCoordinates: Coordinate[] = [new Coordinate(6, 2), new Coordinate(6, 3), new Coordinate(6, 4)]
+    const doorCoordinates: Coordinate[] = [new Coordinate(2, 6), new Coordinate(3, 6), new Coordinate(4, 6)]
     let gameOver = false
     let breakLoop = false
     // making a move.
@@ -210,46 +210,28 @@ export class Jungle {
     let obstacleValue: number | undefined
     let chainValue: number | undefined
     let dead = false
-    let gotTheTreasure = true
-    let run = true
-    if (Jungle.wasDoorOpen) {
-      if (
-        this.currentPos.getX() === doorCoor[0].getX() && this.currentPos.getY() === doorCoor[0].getY()
-        || this.currentPos.getX() === doorCoor[1].getX() && this.currentPos.getY() === doorCoor[1].getY() 
-        || this.currentPos.getX() === doorCoor[2].getX() && this.currentPos.getY() === doorCoor[2].getY()
-      ) {
-        console.log("Add points")
-        run = false // flag that indicates when to execute the conditional below.
-      } else {
-        gotTheTreasure = false
-      }
-    } 
-    if (run) {
-      if (obstacleQueue.length !== 0 && chainValues.length !== 0) {
-        if (obstacleQueue[0].getX() === this.currentPos.getX() && obstacleQueue[0].getY() === this.currentPos.getY()) {
-          obstacleValue = obstacleValues.shift()
-          chainValue = chainValues.shift()
-          greater = this.chainWasGreater(chainValue, obstacleValue)
-          if (obstacleValue !== undefined){
-            dead = this.updateCurrentPos(coordinates[index - 1].getX(), coordinates[index - 1].getY(), true, greater, obstacleValue) // subtract 50 to get the actual value.
-          }
-          greater = false
-          obstacleQueue.shift()
-          if (dead) {
-            return true // the player is dead.
-          }
-        } else {
-          this.table[coordinates[index - 1].getY()][coordinates[index - 1].getX()] = 6  
-          dead = this.updateCurrentPos(coordinates[index - 1].getX(), coordinates[index - 1].getY(), false, false, 1) // the last parameter in this case does not matter.
+    if (obstacleQueue.length !== 0 && chainValues.length !== 0) {
+      if (obstacleQueue[0].getX() === this.currentPos.getX() && obstacleQueue[0].getY() === this.currentPos.getY()) {
+        obstacleValue = obstacleValues.shift()
+        chainValue = chainValues.shift()
+        greater = this.chainWasGreater(chainValue, obstacleValue)
+        if (obstacleValue !== undefined){
+          dead = this.updateCurrentPos(coordinates[index - 1].getX(), coordinates[index - 1].getY(), true, greater, obstacleValue) // subtract 50 to get the actual value.
+        }
+        greater = false
+        obstacleQueue.shift()
+        if (dead) {
+          return true // the player is dead.
         }
       } else {
-        this.table[coordinates[index - 1].getY()][coordinates[index - 1].getX()] = 6
-        dead = this.updateCurrentPos(coordinates[index - 1].getX(), coordinates[index - 1].getY(), false, false, 1)  // the last parameter in this case does not matter.
+        this.table[coordinates[index - 1].getY()][coordinates[index - 1].getX()] = 6  
+        dead = this.updateCurrentPos(coordinates[index - 1].getX(), coordinates[index - 1].getY(), false, false, 1) // the last parameter in this case does not matter.
       }
+    } else {
+      this.table[coordinates[index - 1].getY()][coordinates[index - 1].getX()] = 6
+      dead = this.updateCurrentPos(coordinates[index - 1].getX(), coordinates[index - 1].getY(), false, false, 1)  // the last parameter in this case does not matter.
     }
-    if (!gotTheTreasure) {
-      this.closeDoor()
-    }
+    this.playerAtDoor(doorCoor)
     return false // the player is alive.
   }
 
@@ -258,6 +240,20 @@ export class Jungle {
     return Jungle.goal.every(element => element === 0)
   }
 
+  private playerAtDoor(doorCoor: Coordinate[]) {
+    if (Jungle.wasDoorOpen) {
+      if (
+        this.currentPos.getX() === doorCoor[0].getX() && this.currentPos.getY() === doorCoor[0].getY()
+        || this.currentPos.getX() === doorCoor[1].getX() && this.currentPos.getY() === doorCoor[1].getY() 
+        || this.currentPos.getX() === doorCoor[2].getX() && this.currentPos.getY() === doorCoor[2].getY()
+      ) {
+        console.log("Saracatunga")
+      } else {
+        this.closeDoor()
+      }
+    }
+  }
+  
   private openDoor() {
     this.table[6][2] = DOOR
     this.table[6][3] = DOOR
