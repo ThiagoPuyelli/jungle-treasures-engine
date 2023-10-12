@@ -386,13 +386,17 @@ export class Jungle {
       for (let r = 0; r < this.rows; r++) {
         let current = this.table[r][c]
         if (current === 0) {
-          queue.push(new Coordinate(r, c))
+          queue.push(new Coordinate(c, r))
         } else if (current !== 6 && !SPIKE.includes(current) && !(queue.length === 0) && current !== 0 && current !== 6 + DEATHSYMBOL && current !== DOOR) {
           let coord: Coordinate | undefined = queue.shift()
           if (coord !== undefined) {
-            this.table[coord.getX()][coord.getY()] = current + gemMoved
+            if (current > 10) {
+              this.putInCell(coord, current + 800)
+            } else {
+              this.table[coord.getY()][coord.getX()] = current + gemMoved
+            }
             this.table[r][c] = 0
-            queue.push(new Coordinate(r, c))
+            queue.push(new Coordinate(c, r))
           }
         }
       }
